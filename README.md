@@ -45,10 +45,14 @@ total_time = st.sidebar.slider("Total Time (s)", 0.1, 5.0, 1.0)
 noise_variance = st.sidebar.slider("Noise Variance", 1.0, 50.0, 16.0)
 noise_std_dev = np.sqrt(noise_variance)
 
-# Filter parameters
-Q_value = st.sidebar.slider("Process Noise Covariance (Q)", 0.1, 10.0, 1.0)
-R_value = st.sidebar.slider("Measurement Noise Covariance (R)", 0.1, 50.0, 10.0)
-P_value = st.sidebar.slider("Initial Estimation Error Covariance (P)", 0.1, 10.0, 1.0)
+# Kalman Filter parameters
+st.sidebar.header("Kalman Filter Parameters")
+F_value = st.sidebar.number_input("State Transition Matrix (F)", value=1.0, step=0.1)
+H_value = st.sidebar.number_input("Measurement Matrix (H)", value=1.0, step=0.1)
+Q_value = st.sidebar.number_input("Process Noise Covariance (Q)", value=1.0, step=0.1)
+R_value = st.sidebar.number_input("Measurement Noise Covariance (R)", value=10.0, step=0.1)
+P_value = st.sidebar.number_input("Estimation Error Covariance (P)", value=1.0, step=0.1)
+initial_state = st.sidebar.number_input("Initial State (x)", value=0.0, step=0.1)
 
 # Kalman Filter Class
 class KalmanFilter:
@@ -76,13 +80,13 @@ time_steps = np.arange(0, total_time, sampling_interval)
 true_signal = offset + amplitude * np.sin(2 * np.pi * frequency * time_steps)
 noisy_signal = [val + np.random.normal(0, noise_std_dev) for val in true_signal]
 
-# Apply Kalman Filter
-F = np.array([[1]])
-H = np.array([[1]])
+# Apply Kalman Filter with the specified parameters
+F = np.array([[F_value]])
+H = np.array([[H_value]])
 Q = np.array([[Q_value]])
 R = np.array([[R_value]])
 P = np.array([[P_value]])
-x = np.array([[0]])
+x = np.array([[initial_state]])
 
 kf = KalmanFilter(F, H, Q, R, P, x)
 kalman_estimates = []
@@ -105,22 +109,30 @@ ax.grid()
 
 # Display Plot
 st.pyplot(fig)
+
 ```
 
 <h2>Звіт: Дослідження впливу параметрів Калман-фільтра</h2>
+
+<p align="center">
+    <img src="Screenshots/1.jpg" alt="Схема Калман-фільтра">
+</p>
+<p align="center">
+    Схема Калман-фільтра на стандартних налаштуваннях
+</p>
 
 <h3>1. Вплив Матриці коваріації шуму процесу (Q)</h3>
 <p>Параметр <strong>Q</strong> визначає рівень довіри до моделі процесу. Підвищення значення Q сприяє більшій гнучкості фільтра, що дозволяє йому швидше реагувати на зміни сигналу, але може знизити стабільність, додаючи більше "коливань" у вихідні дані.</p>
 
 <p align="center">
-    <img src="Screenshots/1.jpg" alt="Низьке значення процесної коваріації шуму">
+    <img src="Screenshots/2.jpg" alt="Низьке значення процесної коваріації шуму">
 </p>
 <p align="center">
     Низьке значення процесної коваріації шуму
 </p>
 
 <p align="center">
-    <img src="Screenshots/2.jpg" alt="Високе значення процесної коваріації шуму">
+    <img src="Screenshots/3.jpg" alt="Високе значення процесної коваріації шуму">
 </p>
 <p align="center">
     Високе значення процесної коваріації шуму
@@ -130,14 +142,14 @@ st.pyplot(fig)
 <p>Параметр <strong>R</strong> показує, наскільки сильно фільтр довіряє вимірюванням. При низькому значенні R фільтр дуже чутливий до шуму, оскільки сильно покладається на отримані вимірювання. При високих значеннях фільтр ігнорує шумні дані, використовуючи більше попередні оцінки.</p>
 
 <p align="center">
-    <img src="Screenshots/3.jpg" alt="Низьке значення коваріації шуму вимірювання">
+    <img src="Screenshots/4.jpg" alt="Низьке значення коваріації шуму вимірювання">
 </p>
 <p align="center">
     Низьке значення коваріації шуму вимірювання
 </p>
 
 <p align="center">
-    <img src="Screenshots/4.jpg" alt="Високе значення коваріації шуму вимірювання">
+    <img src="Screenshots/5.jpg" alt="Високе значення коваріації шуму вимірювання">
 </p>
 <p align="center">
     Високе значення коваріації шуму вимірювання
@@ -147,14 +159,14 @@ st.pyplot(fig)
 <p>Значення <strong>P</strong> визначає початкову невпевненість фільтра в своїй оцінці стану. Низьке значення P означає, що фільтр довіряє початковим значенням, що може знизити адаптивність на початкових етапах. Високі значення P, навпаки, підвищують гнучкість фільтра, дозволяючи йому швидше підлаштуватися до нових даних.</p>
 
 <p align="center">
-    <img src="Screenshots/5.jpg" alt="Низьке значення початкової матриці коваріації">
+    <img src="Screenshots/6.jpg" alt="Низьке значення початкової матриці коваріації">
 </p>
 <p align="center">
     Низьке значення початкової матриці коваріації
 </p>
 
 <p align="center">
-    <img src="Screenshots/6.jpg" alt="Високе значення початкової матриці коваріації">
+    <img src="Screenshots/7.jpg" alt="Високе значення початкової матриці коваріації">
 </p>
 <p align="center">
     Високе значення початкової матриці коваріації
@@ -164,14 +176,14 @@ st.pyplot(fig)
 <p>Різні початкові оцінки стану дають змогу побачити, як фільтр адаптується. Якщо початковий стан близький до істинного значення, фільтр швидко стабілізується. При значному відхиленні початкового стану фільтр потребує більше часу для збіжності.</p>
 
 <p align="center">
-    <img src="Screenshots/7.jpg" alt="Початкова оцінка стану з близьким до реального значення">
+    <img src="Screenshots/8.jpg" alt="Початкова оцінка стану з близьким до реального значення">
 </p>
 <p align="center">
     Початкова оцінка стану з близьким до реального значення
 </p>
 
 <p align="center">
-    <img src="Screenshots/8.jpg" alt="Початкова оцінка стану з далеким від реального значення">
+    <img src="Screenshots/9.jpg" alt="Початкова оцінка стану з далеким від реального значення">
 </p>
 <p align="center">
     Початкова оцінка стану з далеким від реального значення
@@ -181,7 +193,7 @@ st.pyplot(fig)
 <p>Зміна <strong>offset</strong> дозволяє оцінити, як фільтр реагує на зміщення в сигналі. Зазвичай, якщо фільтр налаштований правильно, він швидко адаптується до нового рівня сигналу, незалежно від зсуву.</p>
 
 <p align="center">
-    <img src="Screenshots/9.jpg" alt="Високе значення зсуву сигналу">
+    <img src="Screenshots/10.jpg" alt="Високе значення зсуву сигналу">
 </p>
 <p align="center">
     Високе значення зсуву сигналу
@@ -191,14 +203,14 @@ st.pyplot(fig)
 <p>Чим довше триває моделювання, тим більше часу у фільтра на адаптацію. Для тривалих симуляцій фільтр досягає стабільних результатів, навіть якщо налаштований на згладжування короткострокових коливань.</p>
 
 <p align="center">
-    <img src="Screenshots/10.jpg" alt="Короткий час моделювання">
+    <img src="Screenshots/11.jpg" alt="Короткий час моделювання">
 </p>
 <p align="center">
     Короткий час моделювання
 </p>
 
 <p align="center">
-    <img src="Screenshots/11.jpg" alt="Довгий час моделювання">
+    <img src="Screenshots/12.jpg" alt="Довгий час моделювання">
 </p>
 <p align="center">
     Довгий час моделювання
